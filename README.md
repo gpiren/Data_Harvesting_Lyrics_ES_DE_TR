@@ -57,6 +57,9 @@ library(jsonlite)
 library(dplyr) 
 library(dotenv)
 
-Load API Credentials in R Your .Rmd file will use the .env file to load credentials securely run these in an R chunk load_dot_env() spotify_client_id <- Sys.getenv("SPOTIFY_CLIENT_ID") spotify_client_secret <- Sys.getenv("SPOTIFY_CLIENT_SECRET") genius_access_token <- Sys.getenv("GENIUS_ACCESS_TOKEN")
+Load API Credentials in R Your .Rmd file will use the .env file to load credentials securely run these in an R chunk load_dot_env() 
+
+spotify_client_id <- Sys.getenv("SPOTIFY_CLIENT_ID") 
+spotify_client_secret <- Sys.getenv("SPOTIFY_CLIENT_SECRET") genius_access_token <- Sys.getenv("GENIUS_ACCESS_TOKEN")
 
 Enjoy exploring music data and lyrics with this integration! 🎶
