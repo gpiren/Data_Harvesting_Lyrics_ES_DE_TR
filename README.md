@@ -13,6 +13,7 @@ Collaborators:
 🚀 Getting Started
 
 To use the Spotify and Genius APIs, follow these steps:
+
 🔹 Step 1: Create a Spotify Developer Account
 
 Sign Up or Log In:
