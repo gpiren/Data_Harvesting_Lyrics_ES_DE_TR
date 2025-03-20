@@ -1,7 +1,9 @@
 ---
 title: "Data_Harvesting_Lyrics_ES_DE_TR"
-format: 
-  html: 
+format:
+  html:
+    self-contained: true
+    embed-resources: true 
     toc: true
     toc-location: left
     toc-floating: true
