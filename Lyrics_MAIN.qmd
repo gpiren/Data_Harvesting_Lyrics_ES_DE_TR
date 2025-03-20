@@ -1,6 +1,12 @@
 ---
 title: "Data_Harvesting_Lyrics_ES_DE_TR"
-format: html
+format: 
+  html: 
+    toc: true
+    toc-location: left
+    toc-floating: true
+    toc-depth: 3  
+    number-sections: true  
 editor: visual
 ---
 
@@ -13,7 +19,6 @@ As the reader is soon to witness, this project will gradually drift apart from t
 At the early stages of the project, we will be focusing on extracting information regarding the most popular artists and their three most popular songs across Germany, Turkey, and Spain. Having employed Spotify API for that purpose, we will then proceed to extracting lyrics from Genius.com using the Genius API. In doing so, we will not benefit from any packages that are specific to these tasks and use our own functions and scraping methods.
 
 To not spoil all the fun, we will move onto the scraping section.
-
 
 ## Libraries
 
@@ -49,12 +54,11 @@ GENIUS_CLIENT_SECRET <-Sys.getenv("GENIUS_CLIENT_SECRET")
 
 ```
 
-## Top German Hip/ Hop Rap Artists & Their Top Songs on Spotify
+## Top 5 German Hip/ Hop Rap Artists & Their Top Songs on Spotify
 
 Authentication: Get Spotify API Token
 
 ```{r}
-
 get_spotify_token <- function(client_id, client_secret) {
   auth_url <- "https://accounts.spotify.com/api/token"  
   
@@ -85,7 +89,6 @@ get_spotify_token <- function(client_id, client_secret) {
 }
 
 access_token <- get_spotify_token(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)  
-
 
 ```
 
@@ -212,7 +215,7 @@ print(top_artists_german_tracks)
 
 ```
 
-## Top 5 Turkish Artists
+## Top 5 Turkish Hip/ Hop Rap Artists & Their Top Songs on Spotify
 
 authentication: Get Spotify API Token
 
@@ -250,9 +253,6 @@ access_token <- get_spotify_token(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
 ```
 
 Search for Hip-Hop/Rap Artists from Turkey
-
-
-## Top 5 Turkish Artists
 
 authentication: Get Spotify API Token
 
@@ -396,9 +396,6 @@ top_artists_tracks <- top_artists %>%
 
 print(top_artists_tracks)  
 ```
-
-
-
 
 ## Top 5 Spanish Artists
 
@@ -569,7 +566,7 @@ print(top_artists_tracks_es)
 
 ```
 
-#### Get the Lyrics German
+### Get the Lyrics German
 
 We will try to extract Genius IDs for songs on top of the URL
 
@@ -673,7 +670,7 @@ print(top_artists_german_tracks %>% select(artist_name, track_name, genius_url, 
 
 ```
 
-##### scrape from Genius German
+#### Scrape from Genius German
 
 Function to Scrape Lyrics from Genius
 
@@ -728,7 +725,7 @@ write.csv(top_artists_german_tracks_atomic, "german_artists_lyrics.csv", row.nam
 
 ```
 
-#### Get the Lyrics - Turkish
+## Get the Lyrics - Turkish
 
 ```{r}
 get_genius_token <- function(client_id, client_secret) {
@@ -837,7 +834,6 @@ top_artists_tracks <- top_artists_tracks %>%
 print(top_artists_tracks %>% select(artist_name, track_name, genius_url))
 ```
 
-
 ```{r}
 # Function to search for a song on Genius and get its URL and ID
 genious_base_url <- "https://api.genius.com"
@@ -929,8 +925,7 @@ top_artists_tracks <- top_artists_tracks %>%
 print(top_artists_tracks %>% select(artist_name, track_name, genius_url, genius_id))
 ```
 
-
-#### Get the Lyrics
+##\$ Get the Lyrics
 
 We will try to extract Genius IDs for songs on top of the URL
 
@@ -985,16 +980,12 @@ top_artists_tracks_tr_atomic <- top_artists_tracks %>%
 
 ```
 
-
-
-
 ```{r}
 
 write.csv(top_artists_tracks_tr_atomic, "top_artists_tracks_with_TR.csv", row.names = FALSE)
 ```
 
-
-#### Get the Lyrics Spanish
+## Get the Lyrics Spanish
 
 Set Up Genius API
 
@@ -1032,7 +1023,7 @@ genius_base_url_es <- "https://api.genius.com"
 
 ```
 
-Function to Search for a Song on Genius
+### Function to Search for a Song on Genius
 
 ```{r}
 get_genius_song_data_es <- function(artist, track, access_token) {
@@ -1100,7 +1091,7 @@ get_genius_song_data_es <- function(artist, track, access_token) {
 
 ```
 
-Add Genius URLs & IDs to top_artists_tracks_es
+### Add Genius URLs & IDs to top_artists_tracks_es
 
 ```{r}
 top_artists_tracks_es <- top_artists_tracks_es %>%
@@ -1112,7 +1103,7 @@ top_artists_tracks_es <- top_artists_tracks_es %>%
 
 ```
 
-Function to Scrape Lyrics from Genius
+### Function to Scrape Lyrics from Genius
 
 ```{r}
 get_genius_lyrics_es <- function(song_url) {
@@ -1148,7 +1139,7 @@ get_genius_lyrics_es <- function(song_url) {
 
 ```
 
-Scrape Lyrics for All Songs
+### Scrape Lyrics for All Songs
 
 ```{r}
 # Scrape Lyrics for All Songs
@@ -1157,7 +1148,7 @@ top_artists_tracks_es <- top_artists_tracks_es %>%
 
 ```
 
-View and Save Final Dataset
+### View and Save Final Dataset
 
 ```{r}
 print(top_artists_tracks_es %>% select(artist_name, track_name_es, genius_url_es, genius_id_es, lyrics_es))
@@ -1249,12 +1240,9 @@ print(top_artists_tracks_tr_atomic %>% select(artist_name, track_name, lyrics))
 
 ```
 
-
 ```{r}
 write.csv(top_artists_tracks_tr_atomic, file = "top_artists_tracks_with_TR.csv", row.names = FALSE)
 ```
-
-
 
 ```{r}
 
@@ -1298,9 +1286,11 @@ spanish_lyrics <- read.csv("cleaned_spanish_lyrics.csv", stringsAsFactors = FALS
 
 ```
 
-##Text mining:
+## Text Mining
 
-Tokenize the words and adding stepwords: German:
+### Tokenizing the Lyrics & Adding Stopwords
+
+#### German
 
 ```{r}
 german_lyrics_cleaned <- german_lyrics %>%
@@ -1318,7 +1308,7 @@ german_lyrics_cleaned <- german_lyrics_cleaned %>%
 
 ```
 
-Turkish:
+#### Turkish
 
 ```{r}
 
@@ -1332,7 +1322,7 @@ dfm_text <- dfm(tokens_lyrics_tr)
 
 ```
 
-spanish:
+#### Spanish
 
 ```{r}
 # Load standard Spanish stopwords
@@ -1358,7 +1348,9 @@ print(word_freq_es)
 
 ```
 
-Calculating the word freqeuncies: German
+### German Word Frequencies & Sentiment Analysis
+
+#### Frequencies 
 
 ```{r}
 word_freq <- german_lyrics_cleaned %>%
@@ -1367,7 +1359,7 @@ word_freq <- german_lyrics_cleaned %>%
 word_freq
 ```
 
-Bing-Sentiment Word-list
+#### Bing-Sentiment (Positive/ Negative)
 
 ```{r}
 # analyze the mood 
@@ -1390,7 +1382,7 @@ ggplot(sentiment_analysis_bing, aes(x = sentiment, y = n, fill = sentiment)) +
 
 The sentiment analysis of the song lyrics shows that negative words occur significantly more frequently than positive ones. This could indicate that the song lyrics tend to deal with melancholic, critical or gloomy topics.
 
-NRC-Sentiment-Wordlist (Emotions)
+#### NRC Sentiment Anaylysis
 
 ```{r}
 sentiments_nrc <- get_sentiments("nrc")
@@ -1411,7 +1403,7 @@ ggplot(sentiment_analysis_nrc, aes(x = reorder(sentiment, -n), y = n, fill = sen
 
 The emotional analysis of the lyrics shows that negative emotions occur most frequently, followed by fear and a moderate number of positive terms. This indicates that the lyrics often have a gloomy or serious atmosphere, but still contain elements of trust and positive emotions.
 
-# German Word-correlations
+#### Word Correlations: Male & Female
 
 ```{r}
 
@@ -1475,15 +1467,13 @@ ggplot(female_related_words,
 
 ```
 
-Male-Associated Words: The words most correlated with male-related terms in German lyrics include "Wien" (Vienna), "ruf" (call), "krieg" (war), "anzug" (suit), and "Mercedes." These words suggest themes related to power, status, and action, which are often associated with masculinity in lyrical contexts. 
-
+Male-Associated Words: The words most correlated with male-related terms in German lyrics include "Wien" (Vienna), "ruf" (call), "krieg" (war), "anzug" (suit), and "Mercedes." These words suggest themes related to power, status, and action, which are often associated with masculinity in lyrical contexts.
 
 Female-Associated Words: The words most correlated with female-related terms include "vorbild" (role model), "schlechtes" (bad), "richtig" (right), and "freund" (friend). These associations indicate a mix of both positive and negative connotations, reflecting diverse representations of women in lyrics.
 
 The words associated with male terms in german lyrics change each time we run our code, so our analysis may vary.
 
-
-Word-correlations
+#### Word Correlations
 
 ```{r}
 
@@ -1510,13 +1500,10 @@ print(frau_correlation)
 
 ```
 
-## Turkish:
+### Turkish Word Frequencies & Sentiment Analysis 
 
 ```{r}
-
-library(quanteda)
-
-  word_freq <- dfm_text |> 
+word_freq <- dfm_text |> 
   convert(to = "data.frame") |> 
   gather(key = "word", value = "frequency") |> 
   filter(frequency > 0) |> 
@@ -1534,8 +1521,7 @@ word_freq <- word_freq |>
   print(word_freq)
 ```
 
-
-### Bing Sentiment Analysis (Positive/ Negative) - Turkish
+#### Bing Sentiment Analysis (Positive/ Negative)
 
 ```{r}
 # Load Bing sentiment lexicon
@@ -1559,8 +1545,7 @@ ggplot(sentiment_analysis_bing_tr, aes(x = sentiment, y = n, fill = sentiment)) 
 
 ```
 
-
-# NRC Sentiment Analysis - Turkish
+#### NRC Sentiment Analysis
 
 ```{r}
 sentiments_nrc <- get_sentiments("nrc")
@@ -1576,8 +1561,6 @@ print(sentiment_analysis_nrc)
 
 ```
 
-#### Visualizing
-
 ```{r}
 
 ggplot(sentiment_analysis_nrc, aes(x = reorder(sentiment, n), y = n, fill = sentiment)) +
@@ -1587,19 +1570,8 @@ ggplot(sentiment_analysis_nrc, aes(x = reorder(sentiment, n), y = n, fill = sent
   coord_flip()
 ```
 
-```{r}
-ggplot(sentiment_analysis_nrc, aes(x = "", y = n, fill = sentiment)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  theme_minimal() +
-  labs(title = "Total Emotion Counts in Turkish Lyrics", x = "Emotions", y = "Frequency") +
-  scale_fill_brewer(palette = "Set3")  # Use a color palette for better visuals
 
-```
-
-
-# Word Correlation Analysis
-
+#### Word Correlation Analysis
 
 Turkish rap-hiphop songs like to refer to men in the context of love and material concepts such as money and cars ('para' = money, 'vito' = famous car model vito). It also stresses the word 'corleone' - which is a known name for many of us - that requires no explanation.
 
@@ -1607,15 +1579,7 @@ It mostly talks about men who like to have fun in parties (see 'partilerde' = 'a
 
 As all the artists from our Turkish playlist are men, it is appropriote to say that male rappers refer to women in melancholic contexts, highlighted by words such as 'uyuyamamak' (to not be able to sleep), 'karmakarışık' (very complicated), 'geceler, geceleri, geceleyin' (at night), 'fıttırırken' (as I go crazy), 'duygularım' (my emotions), 'acımasız' (cruel), 'bira' (beer). They also referred to women in the context of fun, although not quite prominently, stressed by 'eğlence' (fun).
 
-
 ```{r}
-# Load required libraries
-library(tidyverse)
-library(tidytext)
-library(widyr)
-library(ggplot2)
-
-
 word_correlation_tr <- top_artists_tracks_tr_atomic %>%
   filter(!is.na(track_name)) %>%
   unnest_tokens(word, lyrics) %>%
@@ -1676,9 +1640,7 @@ ggplot(female_related_words_tr,
 
 ```
 
-
-
-### AFINN Sentiment Analysis
+#### AFINN Sentiment Analysis
 
 ```{r}
 # Load AFINN lexicon
@@ -1695,10 +1657,9 @@ sentiment_analysis_afinn_tr <- top_artists_tracks_tr_atomic %>%
 print(sentiment_analysis_afinn_tr)
 ```
 
+### Spanish Word Frequencies & Sentiment Analysis 
 
-
-
-### Spanish Bing Sentiment Analysis (Positive/ Negative)
+#### Bing Sentiment Analysis (Positive/ Negative)
 
 ```{r}
 sentiments_bing_es <- get_sentiments("bing")
@@ -1718,7 +1679,7 @@ ggplot(sentiment_analysis_bing_es, aes(x = sentiment, y = n, fill = sentiment)) 
 
 ```
 
-# Spanish NRC Sentiment Anaylysis (Emotions)
+#### NRC Sentiment Anaylysis 
 
 ```{r}
 sentiments_nrc_es <- get_sentiments("nrc")
@@ -1740,14 +1701,9 @@ ggplot(sentiment_analysis_nrc_es, aes(x = reorder(sentiment, -n), y = n, fill = 
 
 ```
 
-# Word Correlations (Including "Mujer")
+#### Word Correlations: Male 
 
 ```{r}
-library(tidyverse)
-library(tidytext)
-library(widyr)
-library(ggplot2)
-
 spanish_stopwords <- stopwords::stopwords("es")
 
 word_correlation_es <- top_artists_tracks_es_atomic %>%
@@ -1759,7 +1715,7 @@ word_correlation_es <- top_artists_tracks_es_atomic %>%
 
 male_terms_es <- c("hombre", "hombres", "tipo", "jefe", "rey", "bro", "pana", 
                    "gánster", "calle", "mafioso", "boss",  
-                   "bandolero", "real g", "maleante", "hermano", "primo", "compa", "negocio", "lealtad", "respeto")
+                   "bandolero", "real g", "maleante", "hermano", "primo", "papi", "compa", "negocio", "lealtad", "respeto")
 
 male_related_words_es <- word_correlation_es %>%
   filter(item1 %in% male_terms_es | item2 %in% male_terms_es) %>%
@@ -1828,9 +1784,7 @@ print(sentiment_analysis_afinn_es)
 
 ```
 
-
-
-## Comparison - ES - DE - TR
+## DE- TR- ES Sentiment Comparison
 
 ```{r}
 sentiment_analysis_bing_es <- sentiment_analysis_bing_es %>% mutate(language = "Spanish")
@@ -1850,8 +1804,7 @@ emotion_comparison <- bind_rows(sentiment_analysis_nrc_es,
                                 sentiment_analysis_nrc_de)
 ```
 
-
-The below bar plot provides a quick comparison for all three languages on the basis of positive and negative sentiments. Due to considerably greater volume of words in the songs that are present in our list, German tops both sentiments in the count of words that represent each sentiment. 
+The below bar plot provides a quick comparison for all three languages on the basis of positive and negative sentiments. Due to considerably greater volume of words in the songs that are present in our list, German tops both sentiments in the count of words that represent each sentiment.
 
 Spanish is second to German in terms of the count of words reflecting both positivity and negativity, however, both sentiments post highly close numbers, offering a balance as explained in the previous sections.
 
@@ -1871,8 +1824,6 @@ ggplot(sentiment_comparison, aes(x = sentiment, y = n, fill = language)) +
   theme(legend.title = element_blank())  
 ```
 
-
-
 ```{r}
 ggplot(emotion_comparison, aes(x = reorder(sentiment, -n), y = n, fill = language)) +
   geom_bar(stat = "identity", position = "dodge") +  
@@ -1883,4 +1834,3 @@ ggplot(emotion_comparison, aes(x = reorder(sentiment, -n), y = n, fill = languag
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.title = element_blank()) 
 ```
-
