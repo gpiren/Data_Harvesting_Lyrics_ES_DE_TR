@@ -3,9 +3,20 @@ title: "Data_Harvesting_Lyrics_ES_DE_TR"
 format: html
 editor: visual
 ---
-  
+
+## Introduction / Purpose of Study
+
+The purpose of this project is to showcase data harvesting skills and perform a text mining assignment to reveal violent language use in rap-hiphop songs across German, Turkish and Spanish on the basis of gender.
+
+As the reader is soon to witness, this project will gradually drift apart from the gender violence focus and employ a general sentiment analysis approach. But worry not! This is only because all three languages have done very well and used violent language in the gender context extremely rarely. That is why we asked the following question: Then what do they sing about?
+
+At the early stages of the project, we will be focusing on extracting information regarding the most popular artists and their three most popular songs across Germany, Turkey, and Spain. Having employed Spotify API for that purpose, we will then proceed to extracting lyrics from Genius.com using the Genius API. In doing so, we will not benefit from any packages that are specific to these tasks and use our own functions and scraping methods.
+
+To not spoil all the fun, we will move onto the scraping section.
+
+
 ## Libraries
-  
+
 ```{r, message=FALSE}
 library(rvest)     
 library(stringdist) 
@@ -26,8 +37,8 @@ library(wordcloud2)
 
 ```
 
-
 ```{r}
+#| include: false
 #usethis::edit_r_environ()
 
 SPOTIFY_CLIENT_ID <- Sys.getenv("SPOTIFY_CLIENT_ID") 
@@ -37,7 +48,6 @@ GENIUS_CLIENT_ID <- Sys.getenv("GENIUS_CLIENT_ID")
 GENIUS_CLIENT_SECRET <-Sys.getenv("GENIUS_CLIENT_SECRET")
 
 ```
-
 
 ## Top German Hip/ Hop Rap Artists & Their Top Songs on Spotify
 
@@ -239,29 +249,66 @@ access_token <- get_spotify_token(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
 
 ```
 
-Search for Hip-Hop/Rap Artists from Spain
+Search for Hip-Hop/Rap Artists from Turkey
+
+
+## Top 5 Turkish Artists
+
+authentication: Get Spotify API Token
+
+```{r}
+get_spotify_token <- function(client_id, client_secret) {
+  auth_url <- "https://accounts.spotify.com/api/token"  
+  
+  response <- POST(
+    auth_url,  
+    body = list(
+      grant_type = "client_credentials",  
+      client_id = SPOTIFY_CLIENT_ID,  
+      client_secret = SPOTIFY_CLIENT_SECRET  
+    ),
+    encode = "form" 
+  )
+
+  if (http_status(response)$category != "Success") {  
+    stop("Failed to authenticate. Check your client ID and secret.")  
+  }
+
+  token_data <- content(response, as = "parsed", type = "application/json")  
+  
+  if (!"access_token" %in% names(token_data)) {  
+    stop("Error: Could not retrieve access token.")  
+  }
+
+  return(token_data$access_token)  
+}
+access_token <- get_spotify_token(client_id, client_secret) 
+```
+
+Search for Hip-Hop/Rap Artists from Turkey
 
 ```{r}
 search_artists <- function(query, access_token, limit = 50) {
   Sys.sleep(0.5)  
-  
+
   response <- GET(
-    "https://api.spotify.com/v1/search",
-    query = list(q = query, type = "artist", limit = limit),
-    add_headers(Authorization = paste("Bearer", access_token))
+    "https://api.spotify.com/v1/search",  
+    query = list(q = query, type = "artist", limit = limit),  
+    add_headers(Authorization = paste("Bearer", access_token))  
   )
-  
-  if (http_status(response)$category != "Success") {
-    message("API request failed for query: ", query)
-    return(NULL)
+
+  if (http_status(response)$category != "Success") {  
+    message("API request failed for query: ", query)  
+    return(NULL)  
   }
-  
-  data <- content(response, as = "parsed", type = "application/json")
-  
-  if (!"artists" %in% names(data) || length(data$artists$items) == 0) {
-    message("No artists found for query: ", query)
-    return(NULL)
+
+  data <- content(response, as = "parsed", type = "application/json")  
+
+  if (!"artists" %in% names(data) || length(data$artists$items) == 0) {  
+    message("No artists found for query: ", query)  
+    return(NULL)  
   }
+
   
   tibble(
     id = map_chr(data$artists$items, "id", .default = NA),  
@@ -270,13 +317,13 @@ search_artists <- function(query, access_token, limit = 50) {
   )
 }
 
-search_terms <- c("hip hop Türkiye", "rap Türkiye", "trap Türkiye", "drill Türkiye",
+search_terms <- c("hip hop Türkiye", "rap Türkiye", "trap Türkiye", "drill Türkiye",  
                   "alternatif rap Türkiye", "gangsta rap Türkiye", "hip hop underground Türkiye", "old school hip hop Türkiye")
 
-all_artists <- map_df(search_terms, search_artists, access_token = access_token) %>%
-  distinct(id, .keep_all = TRUE) 
-
-top_artists <- head(all_artists, 5)
+all_artists <- map_df(search_terms, search_artists, access_token = access_token) %>%  
+  distinct(id, .keep_all = TRUE) %>%  
+  arrange(desc(popularity))  
+top_artists <- head(all_artists, 5)  
 
 ```
 
@@ -285,17 +332,16 @@ Fetch Detailed Artist Metadata
 ```{r}
 get_artist_details <- function(artist_ids, access_token) {
   Sys.sleep(0.5)  
-  
+
   response <- GET(
-    "https://api.spotify.com/v1/artists",
+    "https://api.spotify.com/v1/artists",  
     query = list(ids = paste(artist_ids, collapse = ",")),  
-    add_headers(Authorization = paste("Bearer", access_token))
+    add_headers(Authorization = paste("Bearer", access_token))  
   )
+
   
-  
-  data <- content(response, as = "parsed")$artists
-  
-  
+  data <- content(response, as = "parsed")$artists  
+
   tibble(
     id = map_chr(data, "id"),  
     followers = map_dbl(data, ~ .x$followers$total %||% 0)  
@@ -303,9 +349,10 @@ get_artist_details <- function(artist_ids, access_token) {
 }
 
 
-artist_details <- get_artist_details(top_artists$id, access_token)
+artist_details <- get_artist_details(top_artists$id, access_token)  
 
-top_artists <- left_join(top_artists, artist_details, by = "id")
+top_artists <- left_join(top_artists, artist_details, by = "id")  
+
 
 ```
 
@@ -314,19 +361,19 @@ Retrieve Top 3 Songs for Each Artist
 ```{r}
 get_top_tracks <- function(artist_id, access_token) {
   Sys.sleep(0.5)  
-  
+
   response <- GET(
-    paste0("https://api.spotify.com/v1/artists/", artist_id, "/top-tracks"),
-    query = list(market = "ES"),  
-    add_headers(Authorization = paste("Bearer", access_token))
+    paste0("https://api.spotify.com/v1/artists/", artist_id, "/top-tracks"),  
+    query = list(market = "TR"),  
+    add_headers(Authorization = paste("Bearer", access_token))  
   )
-  
-  tracks_data <- content(response, as = "parsed")$tracks
-  
+
+  tracks_data <- content(response, as = "parsed")$tracks  
+
   if (length(tracks_data) == 0) {
-    return(tibble(track_name = NA_character_, track_popularity = NA_real_))
+    return(tibble(track_name = NA_character_, track_popularity = NA_real_))   
   }
-  
+
   tibble(
     track_name = map_chr(tracks_data[1:3], "name", .default = NA),  
     track_popularity = map_dbl(tracks_data[1:3], "popularity", .default = NA)  
@@ -334,7 +381,7 @@ get_top_tracks <- function(artist_id, access_token) {
 }
 
 top_artists <- top_artists %>%
-  mutate(top_tracks = map(id, ~ get_top_tracks(.x, access_token)))
+  mutate(top_tracks = map(id, ~ get_top_tracks(.x, access_token)))  
 
 ```
 
@@ -343,13 +390,15 @@ Clean and Format the Final Results
 ```{r}
 
 top_artists_tracks <- top_artists %>%
-  select(artist_name = name, artist_popularity = popularity, 
-         followers, top_tracks) %>%
-  unnest(cols = top_tracks)
+  select(artist_name = name, artist_popularity = popularity,  
+         followers, top_tracks) %>%  
+  unnest(cols = top_tracks)  
 
-print(top_artists_tracks)
-
+print(top_artists_tracks)  
 ```
+
+
+
 
 ## Top 5 Spanish Artists
 
@@ -679,10 +728,9 @@ write.csv(top_artists_german_tracks_atomic, "german_artists_lyrics.csv", row.nam
 
 ```
 
-#### Get the Lyrics Turkish
+#### Get the Lyrics - Turkish
 
 ```{r}
-
 get_genius_token <- function(client_id, client_secret) {
   response <- POST(
     "https://api.genius.com/oauth/token",
@@ -700,36 +748,45 @@ get_genius_token <- function(client_id, client_secret) {
   return(data$access_token)
 }
 
+# Get the new token
 genius_access_token <- get_genius_token(GENIUS_CLIENT_ID, GENIUS_CLIENT_SECRET)
 genius_base_url <- "https://api.genius.com"
 
+# Function to search for a song on Genius and get its URL
 get_genius_song_url <- function(artist, track, access_token) {
-  Sys.sleep(1)  
+  Sys.sleep(1)  # Delay to avoid rate limiting
   
+  # Construct search query with a hint for Turkish context
   query <- paste(artist, track, "Türkiye", sep = " ")
   search_url <- paste0(genius_base_url, "/search")
   
+  # Make the API request
   response <- GET(
     search_url,
     query = list(q = query, access_token = access_token),
     add_headers("User-Agent" = "Mozilla/5.0")
   )
   
+  # Check if request was successful
   if (status_code(response) != 200) {
     message(paste("Search failed for:", artist, "-", track, "Status:", status_code(response)))
     return(NA)
   }
   
+  # Parse JSON response
   data <- content(response, as = "parsed", type = "application/json")
   hits <- data$response$hits
   
+  # Check if any results were found
   if (length(hits) == 0) {
     message(paste("No Genius match found for:", artist, "-", track))
     return(NA)
   }
   
+  # Function to calculate string similarity (lower is better)
   similarity <- function(a, b) stringdist(tolower(a), tolower(b), method = "lv")
   
+  # Find the best match based on artist and track name
   best_match <- NULL
   best_score <- Inf
   
@@ -739,23 +796,28 @@ get_genius_song_url <- function(artist, track, access_token) {
     song_title <- song$title
     song_url <- song$url
     
+    # Skip if not a lyrics page
     if (!grepl("-lyrics$", song_url)) next
     
+    # Calculate similarity scores
     artist_similarity <- similarity(artist, song_artist)
     track_similarity <- similarity(track, song_title)
     total_score <- artist_similarity + track_similarity
     
+    # Update best match if this score is lower (better)
     if (total_score < best_score) {
       best_score <- total_score
       best_match <- song_url
     }
     
+    # Early exit if exact match found (optional optimization)
     if (artist_similarity == 0 && track_similarity == 0) {
       message(paste("Found exact match Genius URL:", song_url))
       return(song_url)
     }
   }
   
+  # Return the best match if found
   if (!is.null(best_match)) {
     message(paste("Found best match Genius URL:", best_match))
     return(best_match)
@@ -765,49 +827,55 @@ get_genius_song_url <- function(artist, track, access_token) {
   return(NA)
 }
 
+# Add Genius URLs to the dataframe
 top_artists_tracks <- top_artists_tracks %>%
   mutate(
     genius_url = map2_chr(artist_name, track_name, ~ get_genius_song_url(.x, .y, genius_access_token))
   )
 
+# View the results
 print(top_artists_tracks %>% select(artist_name, track_name, genius_url))
 ```
 
-#### Get the Lyrics
-
-We will try to extract Genius IDs for songs on top of the URL
 
 ```{r}
-
+# Function to search for a song on Genius and get its URL and ID
 genious_base_url <- "https://api.genius.com"
 
 get_genius_song_url <- function(artist, track, access_token) {
-  Sys.sleep(1)  
+  Sys.sleep(1)  # Delay to avoid rate limiting
   
+  # Construct search query with a hint for Turkish context
   query <- paste(artist, track, "Türkiye", sep = " ")
   search_url <- paste0(genious_base_url, "/search")
   
+  # Make the API request
   response <- GET(
     search_url,
     query = list(q = query, access_token = access_token),
     add_headers("User-Agent" = "Mozilla/5.0")
   )
   
+  # Check if request was successful
   if (status_code(response) != 200) {
     message(paste("Search failed for:", artist, "-", track, "Status:", status_code(response)))
     return(list(url = NA, id = NA))
   }
   
+  # Parse JSON response
   data <- content(response, as = "parsed", type = "application/json")
   hits <- data$response$hits
   
+  # Check if any results were found
   if (length(hits) == 0) {
     message(paste("No Genius match found for:", artist, "-", track))
     return(list(url = NA, id = NA))
   }
   
+  # Function to calculate string similarity (lower is better)
   similarity <- function(a, b) stringdist(tolower(a), tolower(b), method = "lv")
   
+  # Find the best match based on artist and track name
   best_match <- NULL
   best_score <- Inf
   
@@ -818,23 +886,28 @@ get_genius_song_url <- function(artist, track, access_token) {
     song_url <- song$url
     song_id <- song$id
     
+    # Skip if not a lyrics page
     if (!grepl("-lyrics$", song_url)) next
     
+    # Calculate similarity scores
     artist_similarity <- similarity(artist, song_artist)
     track_similarity <- similarity(track, song_title)
     total_score <- artist_similarity + track_similarity
     
+    # Update best match if this score is lower (better)
     if (total_score < best_score) {
       best_score <- total_score
       best_match <- list(url = song_url, id = song_id)
     }
     
+    # Early exit if exact match found (optional optimization)
     if (artist_similarity == 0 && track_similarity == 0) {
       message(paste("Found exact match Genius URL:", song_url))
       return(list(url = song_url, id = song_id))
     }
   }
   
+  # Return the best match if found
   if (!is.null(best_match)) {
     message(paste("Found best match Genius URL:", best_match$url))
     return(best_match)
@@ -844,6 +917,7 @@ get_genius_song_url <- function(artist, track, access_token) {
   return(list(url = NA, id = NA))
 }
 
+# Add Genius URLs to the dataframe
 top_artists_tracks <- top_artists_tracks %>%
   mutate(
     genius_data = map2(artist_name, track_name, ~ get_genius_song_url(.x, .y, genius_access_token)),
@@ -851,28 +925,31 @@ top_artists_tracks <- top_artists_tracks %>%
     genius_id = map_int(genius_data, "id")
   )
 
+# View the results
 print(top_artists_tracks %>% select(artist_name, track_name, genius_url, genius_id))
-
 ```
 
-##### scrape from Genius Turkish
 
-Function to Scrape Lyrics from Genius
+#### Get the Lyrics
+
+We will try to extract Genius IDs for songs on top of the URL
 
 ```{r}
-
 get_genius_lyrics <- function(song_url) {
-  if (is.na(song_url)) return(NA)  
+  if (is.na(song_url)) return(NA)  # If no URL found, return NA
   
-  Sys.sleep(1)  
+  Sys.sleep(1)  # Pause to avoid getting blocked
   
+  # Try reading the page
   tryCatch({
     page <- read_html(song_url)
     
+    # Extract lyrics (Genius structure may change, so check elements)
     lyrics <- page %>%
-      html_nodes("div.lyrics") %>%  
+      html_nodes("div.lyrics") %>%  # Old structure
       html_text(trim = TRUE)
     
+    # Alternative extraction (new Genius layout)
     if (length(lyrics) == 0) {
       lyrics <- page %>%
         html_nodes("div[class^='Lyrics__Container']") %>%
@@ -892,29 +969,30 @@ get_genius_lyrics <- function(song_url) {
   })
 }
 
+# Scrape Lyrics for All Songs
 top_artists_tracks <- top_artists_tracks %>%
   mutate(lyrics = map_chr(genius_url, get_genius_lyrics))
 
 
 
+# View final dataset with Genius IDs, URLs, and Lyrics
 print(top_artists_tracks %>% select(artist_name, track_name, genius_url, genius_id, lyrics))
 
+# Ensure all columns are atomic types before saving to CSV
 top_artists_tracks_tr_atomic <- top_artists_tracks %>%
   select(artist_name, track_name, genius_url, genius_id, lyrics) %>%
   mutate(across(everything(), as.character))  # Convert all columns to character
 
-
 ```
 
-View and Save Final Dataset
+
+
 
 ```{r}
-print(top_artists_tracks_tr_atomic %>% select(artist_name, track_name, genius_url, genius_id, lyrics))
 
 write.csv(top_artists_tracks_tr_atomic, "top_artists_tracks_with_TR.csv", row.names = FALSE)
-
-
 ```
+
 
 #### Get the Lyrics Spanish
 
@@ -951,8 +1029,6 @@ get_genius_token_es <- function(client_id, client_secret) {
 genius_access_token_es <- get_genius_token_es(GENIUS_CLIENT_ID, GENIUS_CLIENT_SECRET)
 
 genius_base_url_es <- "https://api.genius.com"
-
-print(genius_access_token_es)
 
 ```
 
@@ -1106,7 +1182,7 @@ german_lyrics <- read.csv("german_artists_lyrics.csv")
 ```
 
 cleaning lyrics:
-  
+
 ```{r}
 clean_lyrics_de <- function(lyrics) {
   if (is.na(lyrics)) return(NA)
@@ -1121,25 +1197,26 @@ clean_lyrics_de <- function(lyrics) {
 
 ```
 
-
 ```{r}
 german_lyrics <- german_lyrics %>%
   mutate(cleaned_lyrics = map_chr(lyrics, clean_lyrics_de))
 
 print(german_lyrics %>% select(artist_name, track_name, cleaned_lyrics))
+
 ```
 
 Some lyrics are in english or spanish lyrics from german speaking artist, we need to remove those songs:
-  
+
 ```{r, echo=FALSE}
 
 german_lyrics <- german_lyrics %>%
   filter(!track_name %in% c( "Cold as Ice", "Toyota (2016)", "Palmen aus Plastik", "Toto (feat. RAF Camora)","04:30","Babylon"))
 
+
 ```
 
 cleaning Turkish lyrics:
-  
+
 ```{r}
 clean_lyrics_tr <- function(lyrics) {
   if (is.na(lyrics)) return(NA)
@@ -1172,9 +1249,12 @@ print(top_artists_tracks_tr_atomic %>% select(artist_name, track_name, lyrics))
 
 ```
 
+
 ```{r}
 write.csv(top_artists_tracks_tr_atomic, file = "top_artists_tracks_with_TR.csv", row.names = FALSE)
 ```
+
+
 
 ```{r}
 
@@ -1221,7 +1301,7 @@ spanish_lyrics <- read.csv("cleaned_spanish_lyrics.csv", stringsAsFactors = FALS
 ##Text mining:
 
 Tokenize the words and adding stepwords: German:
-  
+
 ```{r}
 german_lyrics_cleaned <- german_lyrics %>%
   unnest_tokens(word, cleaned_lyrics)
@@ -1239,7 +1319,7 @@ german_lyrics_cleaned <- german_lyrics_cleaned %>%
 ```
 
 Turkish:
-  
+
 ```{r}
 
 turkish_stops <- stopwords("turkish", source = "stopwords-iso")
@@ -1253,7 +1333,7 @@ dfm_text <- dfm(tokens_lyrics_tr)
 ```
 
 spanish:
-  
+
 ```{r}
 # Load standard Spanish stopwords
 spanish_stops <- stopwords("es")  
@@ -1395,7 +1475,13 @@ ggplot(female_related_words,
 
 ```
 
-Male-Associated Words: The words most correlated with male-related terms in German lyrics include "Wien" (Vienna), "ruf" (call), "krieg" (war), "anzug" (suit), and "Mercedes." These words suggest themes related to power, status, and action, which are often associated with masculinity in lyrical contexts. Female-Associated Words: The words most correlated with female-related terms include "vorbild" (role model), "schlechtes" (bad), "richtig" (right), and "freund" (friend). These associations indicate a mix of both positive and negative connotations, reflecting diverse representations of women in lyrics.
+Male-Associated Words: The words most correlated with male-related terms in German lyrics include "Wien" (Vienna), "ruf" (call), "krieg" (war), "anzug" (suit), and "Mercedes." These words suggest themes related to power, status, and action, which are often associated with masculinity in lyrical contexts. 
+
+
+Female-Associated Words: The words most correlated with female-related terms include "vorbild" (role model), "schlechtes" (bad), "richtig" (right), and "freund" (friend). These associations indicate a mix of both positive and negative connotations, reflecting diverse representations of women in lyrics.
+
+The words associated with male terms in german lyrics change each time we run our code, so our analysis may vary.
+
 
 Word-correlations
 
@@ -1424,18 +1510,20 @@ print(frau_correlation)
 
 ```
 
-Turkish:
-  
+## Turkish:
+
 ```{r}
 
-word_freq <- dfm_text |> 
+library(quanteda)
+
+  word_freq <- dfm_text |> 
   convert(to = "data.frame") |> 
   gather(key = "word", value = "frequency") |> 
   filter(frequency > 0) |> 
   arrange(desc(frequency)) |> 
   mutate(frequency = as.numeric(frequency)) |>
   filter(!is.na(frequency)) 
-
+  
 
 
 word_freq <- word_freq |> 
@@ -1443,18 +1531,47 @@ word_freq <- word_freq |>
   filter(!word %in% turkish_stops) |> 
   filter(!word %in% c("bi", "mi", "he", "senle", "benle", "şeyini", "neydi", "çoksöyle"))
 
-print(word_freq)
+  print(word_freq)
 ```
+
+
+### Bing Sentiment Analysis (Positive/ Negative) - Turkish
+
+```{r}
+# Load Bing sentiment lexicon
+sentiments_bing_tr <- get_sentiments("bing")
+
+# Perform sentiment analysis using Bing lexicon
+sentiment_analysis_bing_tr <- top_artists_tracks_tr_atomic %>%
+  unnest_tokens(word, lyrics) %>%  # Tokenize lyrics
+  filter(!word %in% turkish_stops) %>%  # Remove stopwords
+  inner_join(sentiments_bing_tr, by = "word") %>%  # Join sentiment lexicon
+  count(sentiment, sort = TRUE)  # Count occurrences of positive/negative words
+
+# View results
+print(sentiment_analysis_bing_tr)
+
+# Plot positive vs. negative sentiment
+ggplot(sentiment_analysis_bing_tr, aes(x = sentiment, y = n, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Positive & Negative Sentiments in Turkish Lyrics", x = "Sentiment", y = "Count")
+
+```
+
+
+# NRC Sentiment Analysis - Turkish
 
 ```{r}
 sentiments_nrc <- get_sentiments("nrc")
 
 sentiment_analysis_nrc <- top_artists_tracks_tr_atomic %>%
-  unnest_tokens(word, lyrics) %>%  # to tokenize the lyrics to get individual words
-  filter(!word %in% turkish_stops) %>%  # exclude stopwords
+  unnest_tokens(word, lyrics) %>%  # Tokenize the lyrics to get individual words
+  filter(!word %in% turkish_stops) %>%  # Exclude stopwords
   inner_join(sentiments_nrc, by = "word") %>%
-  count(sentiment, sort = TRUE)  #  instances of each sentiment
+  count(sentiment, sort = TRUE)  # Count instances of each sentiment
 
+# Show the counts of emotions
 print(sentiment_analysis_nrc)
 
 ```
@@ -1476,11 +1593,112 @@ ggplot(sentiment_analysis_nrc, aes(x = "", y = n, fill = sentiment)) +
   coord_flip() +
   theme_minimal() +
   labs(title = "Total Emotion Counts in Turkish Lyrics", x = "Emotions", y = "Frequency") +
-  scale_fill_brewer(palette = "Set3")  
+  scale_fill_brewer(palette = "Set3")  # Use a color palette for better visuals
 
 ```
 
-## Spanish Bing Sentiment Analysis (Positive/ Negative)
+
+# Word Correlation Analysis
+
+
+Turkish rap-hiphop songs like to refer to men in the context of love and material concepts such as money and cars ('para' = money, 'vito' = famous car model vito). It also stresses the word 'corleone' - which is a known name for many of us - that requires no explanation.
+
+It mostly talks about men who like to have fun in parties (see 'partilerde' = 'at parties', 'oynuyom' = 'I dance' or 'I play', 'ışklar' = 'lights', and 'tavlıyon' = 'you pull girls'). Funny, right!!
+
+As all the artists from our Turkish playlist are men, it is appropriote to say that male rappers refer to women in melancholic contexts, highlighted by words such as 'uyuyamamak' (to not be able to sleep), 'karmakarışık' (very complicated), 'geceler, geceleri, geceleyin' (at night), 'fıttırırken' (as I go crazy), 'duygularım' (my emotions), 'acımasız' (cruel), 'bira' (beer). They also referred to women in the context of fun, although not quite prominently, stressed by 'eğlence' (fun).
+
+
+```{r}
+# Load required libraries
+library(tidyverse)
+library(tidytext)
+library(widyr)
+library(ggplot2)
+
+
+word_correlation_tr <- top_artists_tracks_tr_atomic %>%
+  filter(!is.na(track_name)) %>%
+  unnest_tokens(word, lyrics) %>%
+  filter(!word %in% turkish_stops, nchar(word) > 2) %>%
+  pairwise_cor(word, track_name, sort = TRUE)
+
+male_terms_tr <- c("adam", "lavuk", "eleman", "piç", "çocuk", "herif", "dallama")
+
+# words that correlate with masculine terms
+male_related_words_tr <- word_correlation_tr %>%
+  filter(item1 %in% male_terms_tr | item2 %in% male_terms_tr) %>%
+  mutate(
+    male_term = ifelse(item1 %in% male_terms_tr, item1, item2),
+    other_term = ifelse(item1 %in% male_terms_tr, item2, item1)
+  ) %>%
+  filter(!(other_term %in% male_terms_tr)) %>%
+  filter(correlation > 0.1) %>%
+  arrange(desc(correlation)) %>%
+  head(20)
+
+
+ggplot(male_related_words_tr, 
+       aes(x = reorder(other_term, correlation), y = correlation)) +
+  geom_col(fill = "#6699FF") +
+  coord_flip() +
+  theme_minimal() +
+  labs(
+    title = "Words Associated with Male Terms in Turkish Lyrics",
+    x = "Associated Words", 
+    y = "Correlation Strength"
+  )
+
+
+female_terms_tr <- c("kadın", "kadınlar", "o", "kız", "anne", "kızım", 
+                     "eş", "kız kardeş", "abla", "gelin", "aşk")
+
+female_related_words_tr <- word_correlation_tr %>%
+  filter(item1 %in% female_terms_tr | item2 %in% female_terms_tr) %>%
+  mutate(
+    female_term = ifelse(item1 %in% female_terms_tr, item1, item2),
+    other_term = ifelse(item1 %in% female_terms_tr, item2, item1)
+  ) %>%
+  filter(!(other_term %in% female_terms_tr)) %>%
+  filter(correlation > 0.1) %>%
+  arrange(desc(correlation)) %>%
+  head(20)  # Focus on top 20 correlations
+
+ggplot(female_related_words_tr, 
+       aes(x = reorder(other_term, correlation), y = correlation)) +
+  geom_col(fill = "#FF9999") +
+  coord_flip() +
+  theme_minimal() +
+  labs(
+    title = "Words Associated with Female Terms in Turkish Lyrics",
+    x = "Associated Words", 
+    y = "Correlation Strength"
+  )
+
+```
+
+
+
+### AFINN Sentiment Analysis
+
+```{r}
+# Load AFINN lexicon
+sentiments_afinn_tr <- get_sentiments("afinn")
+
+# Perform sentiment analysis on Turkish lyrics
+sentiment_analysis_afinn_tr <- top_artists_tracks_tr_atomic %>%
+  unnest_tokens(word, lyrics) %>%
+  filter(!word %in% turkish_stops) %>%
+  inner_join(sentiments_afinn_tr, by = "word") %>%
+  summarise(sentiment_score = sum(value, na.rm = TRUE))  # Aggregate sentiment scores
+
+# View results
+print(sentiment_analysis_afinn_tr)
+```
+
+
+
+
+### Spanish Bing Sentiment Analysis (Positive/ Negative)
 
 ```{r}
 sentiments_bing_es <- get_sentiments("bing")
@@ -1538,6 +1756,34 @@ word_correlation_es <- top_artists_tracks_es_atomic %>%
   filter(!word %in% spanish_stopwords, nchar(word) > 2) %>%
   pairwise_cor(word, track_name_es, sort = TRUE)
 
+
+male_terms_es <- c("hombre", "hombres", "tipo", "jefe", "rey", "bro", "pana", 
+                   "gánster", "calle", "mafioso", "boss",  
+                   "bandolero", "real g", "maleante", "hermano", "primo", "compa", "negocio", "lealtad", "respeto")
+
+male_related_words_es <- word_correlation_es %>%
+  filter(item1 %in% male_terms_es | item2 %in% male_terms_es) %>%
+  mutate(
+    male_term = ifelse(item1 %in% male_terms_es, item1, item2),
+    other_term = ifelse(item1 %in% male_terms_es, item2, item1)
+  ) %>%
+  filter(!(other_term %in% male_terms_es)) %>%
+  filter(correlation > 0.1) %>%
+  arrange(desc(correlation)) %>%
+  head(20)
+
+
+ggplot(male_related_words_es, 
+       aes(x = reorder(other_term, correlation), y = correlation)) +
+  geom_col(fill = "#6699FF") +
+  coord_flip() +
+  theme_minimal() +
+  labs(
+    title = "Words Associated with Male Terms in Spanish Lyrics",
+    x = "Associated Words", 
+    y = "Correlation Strength"
+  )
+
 # a focused list of female-related words in Spanish
 female_terms <- c("mujer", "mujeres", "ella", "chica", "madre", "niña", 
                   "señora", "esposa", "novia", "hermana", "hija")
@@ -1555,8 +1801,6 @@ female_related_words <- word_correlation_es %>%
   arrange(desc(correlation)) %>%
   head(20)  # 
 
-
-
 ggplot(female_related_words, 
        aes(x = reorder(other_term, correlation), y = correlation)) +
   geom_col(fill = "#FF9999") +
@@ -1569,7 +1813,7 @@ ggplot(female_related_words,
   )
 ```
 
-#AFINN Sentiment Analysis (Numerical Scores)
+### AFINN Sentiment Analysis (Numerical Scores)
 
 ```{r}
 sentiments_afinn_es <- get_sentiments("afinn")
@@ -1582,5 +1826,61 @@ sentiment_analysis_afinn_es <- top_artists_tracks_es_atomic %>%
 
 print(sentiment_analysis_afinn_es)
 
+```
+
+
+
+## Comparison - ES - DE - TR
+
+```{r}
+sentiment_analysis_bing_es <- sentiment_analysis_bing_es %>% mutate(language = "Spanish")
+sentiment_analysis_bing_tr <- sentiment_analysis_bing_tr %>% mutate(language = "Turkish")
+sentiment_analysis_bing_de <- sentiment_analysis_bing %>% mutate(language = "German")
+
+sentiment_comparison <- bind_rows(sentiment_analysis_bing_es, 
+                                  sentiment_analysis_bing_tr, 
+                                  sentiment_analysis_bing_de)
+
+sentiment_analysis_nrc_es <- sentiment_analysis_nrc_es %>% mutate(language = "Spanish")
+sentiment_analysis_nrc_tr <- sentiment_analysis_nrc %>% mutate(language = "Turkish")
+sentiment_analysis_nrc_de <- sentiment_analysis_nrc %>% mutate(language = "German")
+
+emotion_comparison <- bind_rows(sentiment_analysis_nrc_es, 
+                                sentiment_analysis_nrc_tr, 
+                                sentiment_analysis_nrc_de)
+```
+
+
+The below bar plot provides a quick comparison for all three languages on the basis of positive and negative sentiments. Due to considerably greater volume of words in the songs that are present in our list, German tops both sentiments in the count of words that represent each sentiment. 
+
+Spanish is second to German in terms of the count of words reflecting both positivity and negativity, however, both sentiments post highly close numbers, offering a balance as explained in the previous sections.
+
+Turkish has the lowest number of words in both sentiments, however, this is due to the relatively lower volume of words across all songs. This also has implications that Turkish rap-hiphop songs are not constructed in sentences with a high number of words, instead, they form shorter sentences and let the vibes do the rest!
+
+It is also possible to say that German rap/hiphop is arguably based on long sentences and maybe even story telling, just like old school versions of the genre. Gür likes this a lot!
+
+Spanish songs, on the other hand, demonstrate an in-between performance regarding the number of words, proposing a modest way.
+
+```{r}
+ggplot(sentiment_comparison, aes(x = sentiment, y = n, fill = language)) +
+  geom_bar(stat = "identity", position = "dodge") +  
+  theme_minimal() +
+  labs(title = "Comparison of Positive & Negative Sentiments Across Languages",
+       x = "Sentiment Type", y = "Count") +
+  scale_fill_manual(values = c("Spanish" = "#F1BF00", "Turkish" = "#C8102E", "German" = "black")) +
+  theme(legend.title = element_blank())  
+```
+
+
+
+```{r}
+ggplot(emotion_comparison, aes(x = reorder(sentiment, -n), y = n, fill = language)) +
+  geom_bar(stat = "identity", position = "dodge") +  
+  theme_minimal() +
+  labs(title = "Comparison of Emotional Sentiments Across Languages",
+       x = "Emotion", y = "Frequency") +
+  scale_fill_manual(values = c("Spanish" = "#F1BF00", "Turkish" = "#C8102E", "German" = "black")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.title = element_blank()) 
 ```
 
