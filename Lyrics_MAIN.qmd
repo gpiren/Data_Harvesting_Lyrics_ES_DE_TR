@@ -219,7 +219,7 @@ print(top_artists_german_tracks)
 
 ## Top 5 Turkish Hip/ Hop Rap Artists & Their Top Songs on Spotify
 
-authentication: Get Spotify API Token
+Authentication: Get Spotify API Token
 
 ```{r}
 
@@ -256,7 +256,7 @@ access_token <- get_spotify_token(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
 
 Search for Hip-Hop/Rap Artists from Turkey
 
-authentication: Get Spotify API Token
+Authentication: Get Spotify API Token
 
 ```{r}
 get_spotify_token <- function(client_id, client_secret) {
@@ -400,6 +400,8 @@ print(top_artists_tracks)
 ```
 
 ## Top 5 Spanish Artists
+
+Authentication: Get Spotify API Token
 
 ```{r}
 
@@ -568,9 +570,9 @@ print(top_artists_tracks_es)
 
 ```
 
-### Get the Lyrics German
+## Scraping Lyrics: Extracting Genius IDs for songs and their URLs
 
-We will try to extract Genius IDs for songs on top of the URL
+Authentication: Get Spotify API Token
 
 ```{r}
 
@@ -672,7 +674,7 @@ print(top_artists_german_tracks %>% select(artist_name, track_name, genius_url, 
 
 ```
 
-#### Scrape from Genius German
+### Scrape Genius for German Lyrics
 
 Function to Scrape Lyrics from Genius
 
@@ -727,7 +729,9 @@ write.csv(top_artists_german_tracks_atomic, "german_artists_lyrics.csv", row.nam
 
 ```
 
-## Get the Lyrics - Turkish
+### Scrape Genius for Turkish Lyrics
+
+Function to Scrape Lyrics from Genius
 
 ```{r}
 get_genius_token <- function(client_id, client_secret) {
@@ -927,9 +931,6 @@ top_artists_tracks <- top_artists_tracks %>%
 print(top_artists_tracks %>% select(artist_name, track_name, genius_url, genius_id))
 ```
 
-##\$ Get the Lyrics
-
-We will try to extract Genius IDs for songs on top of the URL
 
 ```{r}
 get_genius_lyrics <- function(song_url) {
@@ -966,16 +967,15 @@ get_genius_lyrics <- function(song_url) {
   })
 }
 
-# Scrape Lyrics for All Songs
 top_artists_tracks <- top_artists_tracks %>%
   mutate(lyrics = map_chr(genius_url, get_genius_lyrics))
 
 
 
-# View final dataset with Genius IDs, URLs, and Lyrics
+
 print(top_artists_tracks %>% select(artist_name, track_name, genius_url, genius_id, lyrics))
 
-# Ensure all columns are atomic types before saving to CSV
+
 top_artists_tracks_tr_atomic <- top_artists_tracks %>%
   select(artist_name, track_name, genius_url, genius_id, lyrics) %>%
   mutate(across(everything(), as.character))  # Convert all columns to character
@@ -987,7 +987,7 @@ top_artists_tracks_tr_atomic <- top_artists_tracks %>%
 write.csv(top_artists_tracks_tr_atomic, "top_artists_tracks_with_TR.csv", row.names = FALSE)
 ```
 
-## Get the Lyrics Spanish
+### Scrape Genius for Spanish Lyrics
 
 Set Up Genius API
 
@@ -1025,7 +1025,7 @@ genius_base_url_es <- "https://api.genius.com"
 
 ```
 
-### Function to Search for a Song on Genius
+Function to Search for a Song on Genius
 
 ```{r}
 get_genius_song_data_es <- function(artist, track, access_token) {
@@ -1093,7 +1093,7 @@ get_genius_song_data_es <- function(artist, track, access_token) {
 
 ```
 
-### Add Genius URLs & IDs to top_artists_tracks_es
+Add Genius URLs & IDs to top_artists_tracks_es
 
 ```{r}
 top_artists_tracks_es <- top_artists_tracks_es %>%
@@ -1105,7 +1105,7 @@ top_artists_tracks_es <- top_artists_tracks_es %>%
 
 ```
 
-### Function to Scrape Lyrics from Genius
+Function to Scrape Lyrics from Genius
 
 ```{r}
 get_genius_lyrics_es <- function(song_url) {
@@ -1141,7 +1141,7 @@ get_genius_lyrics_es <- function(song_url) {
 
 ```
 
-### Scrape Lyrics for All Songs
+Scrape Lyrics for All Songs
 
 ```{r}
 # Scrape Lyrics for All Songs
@@ -1150,7 +1150,7 @@ top_artists_tracks_es <- top_artists_tracks_es %>%
 
 ```
 
-### View and Save Final Dataset
+View and Save Final Dataset
 
 ```{r}
 print(top_artists_tracks_es %>% select(artist_name, track_name_es, genius_url_es, genius_id_es, lyrics_es))
@@ -1174,7 +1174,7 @@ turkish_lyrics <- read.csv("top_artists_tracks_with_TR.csv")
 german_lyrics <- read.csv("german_artists_lyrics.csv")
 ```
 
-cleaning lyrics:
+Cleaning lyrics:
 
 ```{r}
 clean_lyrics_de <- function(lyrics) {
@@ -1198,7 +1198,7 @@ print(german_lyrics %>% select(artist_name, track_name, cleaned_lyrics))
 
 ```
 
-Some lyrics are in english or spanish lyrics from german speaking artist, we need to remove those songs:
+Some lyrics are in English or Spanish lyrics from German speaking artist, we need to remove those songs:
 
 ```{r, echo=FALSE}
 
@@ -1208,18 +1208,18 @@ german_lyrics <- german_lyrics %>%
 
 ```
 
-cleaning Turkish lyrics:
+Cleaning Turkish lyrics:
 
 ```{r}
 clean_lyrics_tr <- function(lyrics) {
   if (is.na(lyrics)) return(NA)
   
   
-  lyrics <- str_replace_all(lyrics, "\\[.*?\\]", "")  # Remove content within []
+  lyrics <- str_replace_all(lyrics, "\\[.*?\\]", "")  # Remove content in []
   
-  lyrics <- str_replace_all(lyrics, "\\(.*?\\)", "")  # Remove content within ()
+  lyrics <- str_replace_all(lyrics, "\\(.*?\\)", "")  # Remove content in ()
   
-  lyrics <- str_replace_all(lyrics, "\\{.*?\\}", "")  # Remove content within {}
+  lyrics <- str_replace_all(lyrics, "\\{.*?\\}", "")  # Remove content in {}
   
   lyrics <- str_replace_all(lyrics, "(?<=[a-z0-9])(?=[A-Z])", "\n")
   
@@ -1246,9 +1246,9 @@ print(top_artists_tracks_tr_atomic %>% select(artist_name, track_name, lyrics))
 write.csv(top_artists_tracks_tr_atomic, file = "top_artists_tracks_with_TR.csv", row.names = FALSE)
 ```
 
-```{r}
+Cleaning Spanish Lyrics
 
-# to clean lyrics, because they had weird signs and stuff
+```{r}
 cleaned_lyrics_es <- function(lyrics) {
   if (is.na(lyrics)) return(NA)
   
@@ -1327,32 +1327,30 @@ dfm_text <- dfm(tokens_lyrics_tr)
 #### Spanish
 
 ```{r}
-# Load standard Spanish stopwords
 spanish_stops <- stopwords("es")  
 
-# **Custom stopwords: Add all manually identified words**
+# Needed to create a list of custom stop words 
 custom_stopwords <- c("si", "ah", "oh", "ala", "eh", "verso", "estribillo", "pa", 
                       "quiere", "quiero", "woh", "morad", "sé", "uh", "pone", "ser",
                       "doy", "t'u", "s'e", "vo'a", "jc", "to", "ere", "ahah", "voa", "beny", "yan")  
 
-# **Combine standard + custom stopwords**
+
 all_stopwords <- unique(c(spanish_stops, custom_stopwords))
 
-# **Tokenize, remove stopwords, and count word frequency**
 word_freq_es <- top_artists_tracks_es_atomic %>%
-  filter(!is.na(lyrics_es) & lyrics_es != "") %>%  # Remove NA + empty rows
-  unnest_tokens(word, lyrics_es) %>%  # Tokenize text
-  filter(!word %in% all_stopwords & word != "") %>%  # **Remove stopwords**
-  count(word, sort = TRUE)  # Count word frequencies
+  filter(!is.na(lyrics_es) & lyrics_es != "") %>%  
+  unnest_tokens(word, lyrics_es) %>%  
+  filter(!word %in% all_stopwords & word != "") %>%  
+  count(word, sort = TRUE)  
 
-# **Check the result**
+
 print(word_freq_es)
 
 ```
 
 ### German Word Frequencies & Sentiment Analysis
 
-#### Frequencies 
+#### Frequencies
 
 ```{r}
 #| include: false
@@ -1503,7 +1501,7 @@ print(frau_correlation)
 
 ```
 
-### Turkish Word Frequencies & Sentiment Analysis 
+### Turkish Word Frequencies & Sentiment Analysis
 
 ```{r}
 #| warning: false
@@ -1574,7 +1572,6 @@ ggplot(sentiment_analysis_nrc, aes(x = reorder(sentiment, n), y = n, fill = sent
   labs(title = "Emotion Analysis of Turkish Lyrics", x = "Emotion", y = "Frequency") +
   coord_flip()
 ```
-
 
 #### Word Correlation Analysis
 
@@ -1662,7 +1659,7 @@ sentiment_analysis_afinn_tr <- top_artists_tracks_tr_atomic %>%
 print(sentiment_analysis_afinn_tr)
 ```
 
-### Spanish Word Frequencies & Sentiment Analysis 
+### Spanish Word Frequencies & Sentiment Analysis
 
 #### Bing Sentiment Analysis (Positive/ Negative)
 
@@ -1684,7 +1681,9 @@ ggplot(sentiment_analysis_bing_es, aes(x = sentiment, y = n, fill = sentiment)) 
 
 ```
 
-#### NRC Sentiment Anaylysis 
+The sentiment analysis of the song lyrics shows that positive words are more frequently found in the Spanish lyrics than negative words. This could show us that the songs are more about potential love interests.
+
+#### NRC Sentiment Anaylysis
 
 ```{r}
 sentiments_nrc_es <- get_sentiments("nrc")
@@ -1705,8 +1704,9 @@ ggplot(sentiment_analysis_nrc_es, aes(x = reorder(sentiment, -n), y = n, fill = 
   labs(title = "Emotional Analysis of Spanish Lyrics", x = "Emotion", y = "Frequencies")
 
 ```
+The emotional analysis of the lyrics reveals that positivity is the most expressed emotion, closely followed by negativity, with fear and joy appearing to a lesser extent. This suggests that the lyrics convey a sense of hopefulness, albeit with a touch of restraint.
 
-#### Word Correlations: Male 
+#### Word Correlations: Male
 
 ```{r}
 spanish_stopwords <- stopwords::stopwords("es")
@@ -1774,7 +1774,11 @@ ggplot(female_related_words,
   )
 ```
 
-### AFINN Sentiment Analysis (Numerical Scores)
+When analyzing male-associated words, we find terms like *"pacto"* (pact), *"quemamo"* (burning), likely symbolizing success, and *"fuego"* (fire), which conveys greatness. The word *"impacto"* (impact) also appears, suggesting their influence on the genre. Overall, male-associated words are closely tied to themes of success and self-importance.
+
+When analyzing female-associated words, we find terms like *"supiera"* (if you knew), *"queda"* (stay), *"enamora"* (fall in love), and *"locura"* (madness/crazy). These words suggest that female-associated language is more centered around love, emotions, and relationships.
+
+#### AFINN Sentiment Analysis (Numerical Scores)
 
 ```{r}
 sentiments_afinn_es <- get_sentiments("afinn")
@@ -1829,6 +1833,8 @@ ggplot(sentiment_comparison, aes(x = sentiment, y = n, fill = language)) +
   theme(legend.title = element_blank())  
 ```
 
+To further illustrate the variation in emotional expression across song lyrics, we created this graph to highlight lyrical differences by country. Given the strong cultural and musical exchange between German and Turkish hip-hop/rap, their lyrical sentiment exhibits a similar emotional range. In contrast, Spanish lyrics show less expressiveness in these particular areas.
+
 ```{r}
 ggplot(emotion_comparison, aes(x = reorder(sentiment, -n), y = n, fill = language)) +
   geom_bar(stat = "identity", position = "dodge") +  
@@ -1839,3 +1845,28 @@ ggplot(emotion_comparison, aes(x = reorder(sentiment, -n), y = n, fill = languag
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.title = element_blank()) 
 ```
+# Concluson
+
+What started as a quest to uncover gender-related violent language in hip-hop and rap lyrics across German, Turkish, and Spanish music quickly turned into something bigger: an exploration of lyrical emotions, gendered language, and the unique vibes of each culture’s rap scene. Turns out, rappers across these languages aren’t dropping violent bars about gender all that much—but they do have a lot to say about success, struggle, and emotions. 
+
+What We Found:
+
+🔹 Sentiment Showdown:
+German rap goes all-in, packing both the most positive and negative words— think dramatic storytelling with serious emotional weight.
+Spanish lyrics keep things balanced, serving a mix of love, heartbreak, and confidence.
+Turkish rap keeps it short but powerful, leaning into melancholic vibes, nightlife, and raw emotion.
+
+🔹 Emotional Rollercoaster:
+Negativity reigns supreme across all three languages, with fear creeping in, especially in German and Turkish lyrics.
+Spanish rap? More hopeful, but still not afraid to mix in some bittersweet themes.
+Turkish artists don’t hold back on expressing deep emotions—whether it’s partying hard or feeling heartbreak.
+
+🔹Gendered Bars:
+Male-associated words? It’s all about dominance, success, and the flex. German rap throws in "krieg" (war) and "Mercedes" for power and luxury, Turkish rap mixes "para" (money) with "partilerde" (at parties) for a mix of wealth and nightlife, while Spanish rap hypes "pacto" (pact) and "fuego" (fire) to emphasize greatness.
+
+Female-associated words? More about emotions, relationships, and complexity. German lyrics balance between "vorbild" (role model) and "schlechtes" (bad), Turkish rap leans into heartache with "uyuyamamak" (can’t sleep) and "fıttırırken" (going crazy), while Spanish lyrics stay romantic with "enamora" (fall in love) and "locura" (madness).
+
+Bottom line? Across the board, men are rapping about status, power, and nightlife, while women in lyrics are more tied to love, emotions, and personal struggles.
+
+The Big Picture:
+Across the board, men rap about status, power, and nightlife, while women in lyrics are more connected to love, emotions, and personal struggles. German rap brings the lyrical fire with intense storytelling, Turkish rap packs an emotional punch, balancing party life with deep personal struggles, and Spanish rap smooths it all out with love and self-reflection. While cultural differences shape the way emotions and success are expressed, hip-hop in every language remains a universal mix of ambition, struggle, and storytelling.
