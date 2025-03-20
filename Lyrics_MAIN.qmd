@@ -1353,6 +1353,7 @@ print(word_freq_es)
 #### Frequencies 
 
 ```{r}
+#| include: false
 word_freq <- german_lyrics_cleaned %>%
   count(word, sort = TRUE)
 
@@ -1503,6 +1504,8 @@ print(frau_correlation)
 ### Turkish Word Frequencies & Sentiment Analysis 
 
 ```{r}
+#| warning: false
+#| include: false
 word_freq <- dfm_text |> 
   convert(to = "data.frame") |> 
   gather(key = "word", value = "frequency") |> 
